@@ -1,0 +1,47 @@
+[package]
+name = "whisper_wrapper_rust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Victor"]
+description = "A Rust wrapper for whisper.cpp"
+repository = "https://github.com/ggml-org/whisper.cpp"
+license = "MIT"
+readme = "README.md"
+keywords = ["whisper", "speech-recognition", "audio", "transcription", "ai"]
+categories = ["api-bindings", "multimedia", "external-ffi-bindings"]
+
+[lib]
+name = "whisper_wrapper_rust"
+path = "src/lib.rs"
+
+[[bin]]
+name = "whisper_cli"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[dependencies]
+reqwest = { version = "0.11", features = ["blocking", "json"], optional = true }
+tempfile = "3.8"
+flate2 = "1.0"
+tar = "0.4"
+zip = "0.6"
+thiserror = "1.0"
+clap = { version = "4.4", features = ["derive"], optional = true }
+dirs = "5.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+env_logger = { version = "0.10", optional = true }
+anyhow = "1.0"
+indicatif = { version = "0.17", optional = true }
+cc = "1.0"
+bindgen = "0.69"
+
+[build-dependencies]
+cc = "1.0"
+bindgen = "0.69"
+
+[features]
+default = ["download", "cli"]
+download = ["reqwest", "indicatif"]
+cli = ["clap", "env_logger", "download"]
