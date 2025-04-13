@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -137,9 +138,61 @@ pub fn find_whisper_binary() -> Result<PathBuf> {
         }
     }
 
-    // If we still can't find it, suggest building it
+    // If we still can't find it, suggest building it or using the build_whisper_binary function
     Err(anyhow::anyhow!(
         "Could not find whisper.cpp binary. Please make sure whisper.cpp is built and the binary is in your PATH, \
-        or specify the path to the binary using the --binary option."
+        or specify the path to the binary using the --binary option, or use the build_whisper_binary function to build it."
     ))
+}
+
+/// Builds the whisper.cpp binary and returns the path to the built binary
+pub fn build_whisper_binary() -> Result<PathBuf> {
+    // Create a temporary directory for building whisper.cpp
+    let temp_dir = env::temp_dir().join("whisper_cpp_build");
+    if !temp_dir.exists() {
+        fs::create_dir_all(&temp_dir)?;
+    }
+
+    // Clone whisper.cpp if it doesn't exist
+    let whisper_dir = temp_dir.join("whisper.cpp");
+    if !whisper_dir.exists() {
+        println!("Cloning whisper.cpp repository...");
+        let status = Command::new("git")
+            .args(&[
+                "clone",
+                "https://github.com/ggml-org/whisper.cpp",
+                whisper_dir.to_str().unwrap(),
+            ])
+            .status()
+            .expect("Failed to clone whisper.cpp repository");
+
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to clone whisper.cpp repository"));
+        }
+    }
+
+    // Build whisper.cpp
+    println!("Building whisper.cpp...");
+    let status = Command::new("make")
+        .current_dir(&whisper_dir)
+        .status()
+        .expect("Failed to build whisper.cpp");
+
+    if !status.success() {
+        return Err(anyhow::anyhow!("Failed to build whisper.cpp"));
+    }
+
+    // Check if the binary was built successfully
+    let binary_path = whisper_dir.join("main");
+    if !binary_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Failed to find the built whisper.cpp binary"
+        ));
+    }
+
+    println!(
+        "whisper.cpp binary built successfully at: {:?}",
+        binary_path
+    );
+    Ok(binary_path)
 }
