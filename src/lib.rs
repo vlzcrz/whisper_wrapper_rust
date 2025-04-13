@@ -44,6 +44,7 @@
 //! ```
 
 mod bindings;
+pub mod commands;
 mod context;
 mod error;
 mod params;
@@ -51,6 +52,7 @@ mod params;
 #[cfg(feature = "download")]
 mod download;
 
+pub use commands::execute_whisper_cpp;
 pub use context::WhisperContext;
 pub use error::WhisperError;
 pub use params::WhisperParams;
